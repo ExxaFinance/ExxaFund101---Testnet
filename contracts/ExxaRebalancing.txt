@@ -1,0 +1,14 @@
+## 🧠 Exxa Rebalancing Automation – TWAP Strategy
+
+This Python script triggers the `rebalanceTWAPStep()` function from the ExxaFund101 contract once per cycle.
+
+> Designed to run over **10 days**, this approach minimizes price impact through Time-Weighted Average Price (TWAP) execution.
+
+---
+
+### ⚙️ Setup
+
+1. Clone the repository and add your environment file:
+
+```bash
+touch .env
