@@ -131,7 +131,9 @@ Any commercial use, reproduction, or fork is strictly prohibited without written
 ## 📬 Contact
 
 🔗 Website: [exxafinance.com](https://exxafinance.com)  
+
 📩 Twitter: [See Twitter](https://x.com/exxafinance) 
+
 🧑‍💼 Partnerships: [See Telegram](https://t.me/exxafinance)
 
 ---
