@@ -1,7 +1,7 @@
 # ExxaFund101 – v1.0 Smart Contract for Exxa Finance Top 10 Fund
 
 **ExxaFund101.sol** is the official smart contract developed by **Exxa Finance** to manage an automated portfolio based on the top 10 cryptocurrencies.  
-It is designed to operate on the **Hyperliquid EVM blockchain (Testnet)**, featuring auto-investment logic, user tracking, and dynamic rebalancing.
+It is designed to operate on the **Hyperliquid EVM blockchain (Testnet)**, featuring auto-investment logic, user tracking, modular rebalancing, and backend automation tools.
 
 📌 **Version**: v1.0 – Stable & compilable  
 🧪 **Network**: Hyperliquid Testnet  
@@ -9,18 +9,53 @@ It is designed to operate on the **Hyperliquid EVM blockchain (Testnet)**, featu
 
 ---
 
+## 🔍 Overview
+This repository includes the entire infrastructure for managing the Exxa Top 10 Fund:
+- Smart contracts for deposits, portfolio management, withdrawals, and IRT token migration
+- A modular Solidity library for rebalancing logic
+- A Python automation script for TWAP execution across multiple days
+- Deployment scripts for testnet integration via Ethers and Web3
+
+> ⚠️ This project is **not open-source**. It is made **public for documentation and transparency only**, and remains the intellectual property of **Exxa Finance**.
+
+---
+
 ## 🚀 Key Features
 
 - Accepts deposits in **multiple stablecoins** (USDT, USDC...) and **EXXA token**
-- Automatically invests across the **top 10 crypto assets** (by cap & volume)
-- Dynamic **rebalancing** with ±0.1% tolerance from target weights
-- Redeemable in **IRT token** to migrate to other Exxa funds
+- Automatically invests across the **top 10 crypto assets** (by market cap & volume)
+- Smart contract uses `marketBuy()` and `marketSellPartial()` via **Hyperliquid EVM DEX integration**
+- Dynamic **rebalancing** logic with ±0.1% tolerance from target weights
+- Rebalancing executed through **TWAP logic** over 10 steps
+- Redeemable in **IRT token** to migrate funds between Exxa fund products
 - Tracks full **investment history per user**
 - Admin-only controls for:
-  - Updating prices
   - Updating top 10 asset list
-  - Adjusting asset weightings
-  - Rebalancing the portfolio
+  - Adjusting per-asset weights
+  - Forcing price updates (manual or oracle)
+  - Calling rebalancing steps
+
+---
+
+## 📦 Project Structure
+
+- **`ExxaFund101.sol`** – Core contract managing deposits, swaps, rebalancing, redemptions
+- **`RebalancingLib.sol`** – Dedicated library to handle weight deviations and rebalancing math
+- **`/contracts/`** – Compiled Solidity artifacts and metadata
+- **`/scripts/`** – Deployment via `ethers.js` or `web3.js`
+- **`/Backend/rebalance_TWAP_scheduler.py`** – Python script to automate 10-day rebalancing
+- **`/abi/ExxaFund101.json`** – Compiled ABI for frontend/backend interactions
+
+---
+
+## 🧠 How It Works
+
+1. **Deposit**: Users deposit supported stablecoins or EXXA.
+2. **Conversion**: Stablecoins (non-USDT) are converted to USDT on-chain.
+3. **Auto-Invest**: Funds are split across the top 10 assets using target weights.
+4. **Rebalancing**: The system detects over-/underweight assets and gradually rebalances via TWAP.
+5. **Withdrawals**: Users can withdraw in tokens or mint IRT to migrate to another fund.
+6. **Admin Tools**: Enable weight config, asset list updates, price overrides, and reset of TWAP.
 
 ---
 
@@ -33,41 +68,53 @@ It is designed to operate on the **Hyperliquid EVM blockchain (Testnet)**, featu
 | 🔌 DEX Integration     | `IHyperliquid` interface (`hyperliquid-evm`) |
 | 📊 Allocation Weights  | Basis points (`1000 = 10%`) |
 | 🔐 Admin Access        | `onlyOwner` enforced |
-| 🧩 Design              | Modular & future-proof |
+| 🧩 Design              | Modular & upgrade-ready |
 
 ---
 
-## 🧠 How It Works
+## 📂 TWAP Rebalancing Automation
 
-1. **Deposit**: Users can deposit supported stablecoins or EXXA.
-2. **Conversion**: If needed, stablecoins are converted to USDT.
-3. **Auto-Invest**: Funds are automatically split among the top 10 assets using `marketBuy()`.
-4. **Rebalancing**: `rebalancePortfolio()` compares current vs. target values, and calls `marketSellPartial()` or `marketBuy()` accordingly.
-5. **Withdrawals**: Users can withdraw directly or convert to IRT to jump to another fund.
-6. **Admin Tools**: Owner can adjust the fund’s structure, valuation, and strategies.
+A 10-step TWAP strategy is implemented using:
+
+**Python Script** → `/Backend/rebalance_TWAP_scheduler.py`
+
+- Runs 1 step of rebalancing via `rebalanceTWAPStep()` every 24h
+- Designed for use with cron, CI/CD, or backend automation
+- `.env` support for secure private key handling
+- Waits between steps automatically (default = 1 day)
+
+### Installation
+```bash
+pip install web3 python-dotenv
+```
+
+### Example Usage
+```bash
+python Backend/rebalance_TWAP_scheduler.py
+```
 
 ---
 
-## 🧪 Testnet Status
+## 🧪 Testnet Deployment
 
-This contract is currently in development and testing for the **Hyperliquid Testnet**:
+The ExxaFund101 system is currently available for testing on **Hyperliquid Testnet**:
 
-🔗 [Hyperliquid Testnet RPC](https://rpc.hyperliquid-testnet.xyz/evm)
+🔗 [Testnet RPC](https://rpc.hyperliquid-testnet.xyz/evm)
 
-You can deploy and interact with it via:
-
-- Hardhat or Foundry
-- Python deployment script using `web3.py` and `hyperliquid-evm`
+- Deploy via:
+  - Hardhat / Foundry
+  - `/scripts/deploy_with_ethers.ts`
+  - `/scripts/deploy_with_web3.ts`
 
 ---
 
-## 📌 Next Versions (v1.1+)
+## 📈 Roadmap – Next Versions (v1.1+)
 
-- [ ] Oracle price feeds (e.g., Chainlink or native Hyperliquid data)
-- [ ] Frontend UI (React-based investor dashboard)
-- [ ] Automated timed rebalancing
-- [ ] Modular fund types (Crypto / Narrative / TradFi variations)
-- [ ] On-chain metadata for tokenized funds
+- [ ] Oracle price feeds (e.g., Chainlink or Hyperliquid-native)
+- [ ] Web frontend for deposits, history & withdrawals (React)
+- [ ] Keeper-automated rebalancing
+- [ ] Additional fund types (DeFi, RWA, AI, TradFi)
+- [ ] NFT/IRT Metadata standard
 
 ---
 
@@ -84,9 +131,9 @@ Any commercial use, reproduction, or fork is strictly prohibited without written
 ## 📬 Contact
 
 🔗 Website: [exxafinance.com](https://exxafinance.com)  
-📩 Email: Soon available.  
-📌 Version: `ExxaFund101.sol` v1.0 (Testnet)
+📩 Email: contact@exxafinance.com  
+🧑‍💼 Partnerships: dev@exxafinance.com
 
 ---
 
-> Thank you for your interest in Exxa. Together, we’re building the future of smart, automated crypto investing. 🌐🚀
+> Thank you for your interest in Exxa Finance. Together, we’re building the future of smart, automated crypto investing. 🌐🚀
