@@ -84,7 +84,7 @@ Any commercial use, reproduction, or fork is strictly prohibited without written
 ## 📬 Contact
 
 🔗 Website: [exxafinance.com](https://exxafinance.com)  
-📩 Email: contact[at]exxafinance.com  
+📩 Email: Soon available.  
 📌 Version: `ExxaFund101.sol` v1.0 (Testnet)
 
 ---
