@@ -6,9 +6,9 @@ This Python script triggers the `rebalanceTWAPStep()` function from the ExxaFund
 
 ---
 
-### ⚙️ Setup
+🚀 Usage
 
-1. Clone the repository and add your environment file:
+python rebalance_scheduler.py
+The script will run 10 times with a 24h delay (configurable).
 
-```bash
-touch .env
+Each run executes one asset rebalance step via rebalanceTWAPStep().
