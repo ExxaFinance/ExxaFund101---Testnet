@@ -1,13 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
+// Core fund contract for Exxa Finance's Top 10 portfolio, auto-investing on deposit and rebalancing via TWAP strategy
 import "hyperliquid-evm/contracts/interfaces/IHyperliquid.sol";
 import "./rebalancinglib.sol";
 
 contract ExxaFund101 {
     using RebalancingLib for RebalancingLib.FundState;
 
-    // === Core Admin and Token Configuration ===
+    // --- Admin & Token Configuration ---
     address public owner;
     address public exxaToken;
     address public nativeToken;
@@ -20,11 +21,11 @@ contract ExxaFund101 {
     uint256 public totalShares;
     uint256 public totalFundValueUSD;
 
-    // === Asset Valuation ===
+    // --- Asset Market Data ---
     mapping(address => uint256) public assetPrices;
     mapping(address => uint256) public assetWeights;
 
-    // === User Tracking ===
+    // --- User Holdings Tracking ---
     mapping(address => uint256) public userShares;
     mapping(address => UserInvestment[]) public userHistory;
 
@@ -34,7 +35,7 @@ contract ExxaFund101 {
         uint256 sharesIssued;
     }
 
-    // === Events ===
+    // --- Events ---
     event Deposited(address indexed user, address tokenIn, uint256 amountUSD, uint256 sharesIssued);
     event Withdrawal(address indexed user, uint256 amountUSD);
     event RedeemedToIRT(address indexed user, uint256 amountUSD);
@@ -50,6 +51,7 @@ contract ExxaFund101 {
         _;
     }
 
+    // Initialize core addresses and top assets with their weights
     constructor(
         address _exxaToken,
         address _nativeToken,
@@ -71,6 +73,7 @@ contract ExxaFund101 {
         fundState.targetWeights = weights;
     }
 
+    // User deposits into fund, converted to USDT if needed and invested proportionally
     function deposit(address tokenIn, uint256 amountUSD) external {
         require(amountUSD > 0, "Amount must be greater than 0");
         require(isAcceptedToken(tokenIn), "Token not accepted");
@@ -95,6 +98,7 @@ contract ExxaFund101 {
         _autoInvest(amountUSD);
     }
 
+    // Automatically invest new funds proportionally across target-weighted assets
     function _autoInvest(uint256 totalAmountUSD) internal {
         for (uint i = 0; i < fundState.assets.length; i++) {
             uint256 allocation = (fundState.targetWeights[i] * totalAmountUSD) / 10000;
@@ -102,12 +106,7 @@ contract ExxaFund101 {
         }
     }
 
-    function sellAllAssets() external onlyOwner {
-        for (uint i = 0; i < fundState.assets.length; i++) {
-            hyperliquid.marketSellSymbol(fundState.assets[i]);
-        }
-    }
-
+    // Withdraw a portion of user's shares in exchange for a supported token
     function withdraw(uint256 shares, address tokenOut) external {
         require(userShares[msg.sender] >= shares, "Not enough shares");
         require(isAcceptedToken(tokenOut), "Invalid token");
@@ -121,6 +120,7 @@ contract ExxaFund101 {
         emit Withdrawal(msg.sender, amountUSD);
     }
 
+    // Redeem shares for IRT token to migrate to another Exxa fund
     function redeemToIRT(uint256 shares) external {
         require(userShares[msg.sender] >= shares, "Not enough shares to convert to IRT");
         uint256 amountUSD = (shares * totalFundValueUSD) / totalShares;
@@ -133,11 +133,13 @@ contract ExxaFund101 {
         emit RedeemedToIRT(msg.sender, amountUSD);
     }
 
+    // Manually update the fund valuation in USD
     function updateFundValuation(uint256 newTotalValueUSD) external onlyOwner {
         totalFundValueUSD = newTotalValueUSD;
         emit FundValuationUpdated(newTotalValueUSD);
     }
 
+    // Replace all 10 top assets and reset their target weights
     function updateTopAssetsAndWeights(address[] calldata newAssets, uint256[] calldata newWeights) external onlyOwner {
         require(newAssets.length == 10 && newWeights.length == 10, "Invalid length");
         fundState.assets = newAssets;
@@ -146,12 +148,14 @@ contract ExxaFund101 {
         emit AssetWeightsUpdated(newAssets, newWeights);
     }
 
+    // Update weights for current top assets
     function updateAssetWeights(address[] calldata assetSymbols, uint256[] calldata newWeights) external onlyOwner {
         require(assetSymbols.length == newWeights.length, "Mismatched lengths");
         fundState.targetWeights = newWeights;
         emit AssetWeightsUpdated(assetSymbols, newWeights);
     }
 
+    // Feed price data for portfolio valuation and rebalancing
     function updateAssetPrices(address[] calldata symbols, uint256[] calldata prices) external onlyOwner {
         require(symbols.length == prices.length, "Mismatched inputs");
         for (uint i = 0; i < symbols.length; i++) {
@@ -160,12 +164,14 @@ contract ExxaFund101 {
         emit AssetPricesUpdated(symbols, prices);
     }
 
+    // Get portfolio-wide weighted price
     function getWeightedAssetPriceSum() external view returns (uint256 totalWeightedPrice) {
         for (uint i = 0; i < fundState.assets.length; i++) {
             totalWeightedPrice += (assetPrices[fundState.assets[i]] * fundState.targetWeights[i]) / 10000;
         }
     }
 
+    // Full rebalancing logic: adjusts assets to stay within 10% ±1% target tolerance
     function rebalancePortfolio() external onlyOwner {
         uint256 total;
         uint256[] memory currentValues = new uint256[](fundState.assets.length);
@@ -189,6 +195,7 @@ contract ExxaFund101 {
         }
     }
 
+    // Step-by-step TWAP rebalance triggered externally (e.g. via Python script)
     function rebalanceStep(uint256[] calldata prices) external onlyOwner {
         require(prices.length == fundState.targetWeights.length, "Mismatched array length");
         emit RebalanceRequested(msg.sender, block.timestamp);
@@ -196,14 +203,17 @@ contract ExxaFund101 {
         emit RebalanceExecuted(msg.sender, block.timestamp);
     }
 
+    // Get estimated USD value of a user's shares
     function getUserShareValue(address user) external view returns (uint256) {
         return (userShares[user] * totalFundValueUSD) / totalShares;
     }
 
+    // Return the full asset list and current weights
     function getCurrentState() external view returns (address[] memory, uint256[] memory) {
         return (fundState.assets, fundState.targetWeights);
     }
 
+    // Check if the token is allowed for deposits/withdrawals
     function isAcceptedToken(address token) public view returns (bool) {
         if (token == exxaToken || token == nativeToken || token == irtToken) return true;
         for (uint i = 0; i < stablecoins.length; i++) {
@@ -213,11 +223,13 @@ contract ExxaFund101 {
     }
 }
 
+// Basic ERC20 interface
 interface IERC20 {
     function transfer(address recipient, uint256 amount) external returns (bool);
     function transferFrom(address sender, address recipient, uint256 amount) external returns (bool);
 }
 
+// Hyperliquid trading interface
 interface IHyperliquid {
     function marketBuySymbol(address asset, uint256 amountUSD) external;
     function marketSellSymbol(address asset) external;
