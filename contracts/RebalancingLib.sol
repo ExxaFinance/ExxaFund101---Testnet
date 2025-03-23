@@ -2,22 +2,21 @@
 pragma solidity ^0.8.20;
 
 /**
- * @title RebalancingLib
- * @dev Library to compute rebalancing deltas for ExxaFund101 Top 10 assets.
- * This library identifies underweight and overweight assets, and computes
- * how to shift capital between them to bring allocations back to target weights.
+ * RebalancingLib helps the ExxaFund101 contract figure out how to bring
+ * the portfolio back to its target allocations.
+ *
+ * It checks which assets have grown too large (overweight) or too small (underweight),
+ * and calculates how much to buy or sell to fix that.
  */
 library RebalancingLib {
-    using RebalancingLib for *;
-
+    // Each AssetAdjustment tells us how much to buy or sell of a token.
+    // If deltaUSD is positive, we need to buy. If it's negative, we should sell.
     struct AssetAdjustment {
         string symbol;
-        int256 deltaUSD; // Positive = Buy, Negative = Sell
+        int256 deltaUSD;
     }
 
-    /**
-     * @notice Returns the current USD value of an asset given its weight and price
-     */
+    // Calculates how much value (in USD) an asset currently has in the portfolio.
     function getCurrentValue(
         uint256 price,
         uint256 weightBps,
@@ -26,10 +25,7 @@ library RebalancingLib {
         return (price * weightBps * totalPortfolioUSD) / (10000 * price);
     }
 
-    /**
-     * @notice Get the delta (buy/sell amount) needed for a single asset to reach its target weight
-     * @dev Used for single-asset step-based TWAP rebalancing
-     */
+    // Figures out how far an asset is from its target weight in USD.
     function getAssetDelta(
         string memory asset,
         uint256 weight,
@@ -39,20 +35,18 @@ library RebalancingLib {
         mapping(string => uint256) storage prices
     ) internal view returns (int256 deltaUSD, uint256 totalPortfolioUSD) {
         totalPortfolioUSD = getTotalPortfolioValue(top10, weights, prices);
+
         uint256 target = (totalPortfolioUSD * weight) / 10000;
         uint256 current = (price * weight) / 10000;
 
-        // Calculate delta: difference between target and current allocation
         if (current > target) {
-            deltaUSD = int256(target) - int256(current); // negative = sell
+            deltaUSD = int256(target) - int256(current); // sell
         } else {
-            deltaUSD = int256(target - current); // positive = buy
+            deltaUSD = int256(target - current); // buy
         }
     }
 
-    /**
-     * @notice Get the total portfolio value based on all assets and prices
-     */
+    // Adds up the total USD value of the portfolio across all assets.
     function getTotalPortfolioValue(
         string[] memory top10,
         mapping(string => uint256) storage weights,
@@ -64,24 +58,21 @@ library RebalancingLib {
         }
     }
 
-    /**
-     * @notice Returns two arrays of adjustments: sells and buys to balance the portfolio
-     * Assets over 10% will provide liquidity to those under 10% proportionally
-     */
+    // Figures out which assets have too much or too little capital in them.
+    // Returns two lists: one for assets we need to sell from, and one to buy into.
     function computeRebalancePlan(
         string[] memory top10,
         mapping(string => uint256) storage weights,
         mapping(string => uint256) storage prices
     ) internal view returns (AssetAdjustment[] memory sells, AssetAdjustment[] memory buys) {
         uint256 totalValueUSD = getTotalPortfolioValue(top10, weights, prices);
-        uint256 toleranceBps = 10; // 0.1% tolerance (10bps)
+        uint256 toleranceBps = 10; // allow a 0.1% deviation before acting
 
-        // Temp memory arrays to hold max 10 entries
         AssetAdjustment[] memory overweights = new AssetAdjustment[](10);
         AssetAdjustment ;
 
-        uint8 overIndex;
-        uint8 underIndex;
+        uint8 overIndex = 0;
+        uint8 underIndex = 0;
 
         for (uint i = 0; i < top10.length; i++) {
             string memory asset = top10[i];
@@ -90,9 +81,9 @@ library RebalancingLib {
             uint256 current = (price * weights[asset]) / 10000;
 
             if (current > target + (target * toleranceBps) / 10000) {
-                overweights[overIndex++] = AssetAdjustment(asset, int256(current) - int256(target));
+                overweights[overIndex++] = AssetAdjustment(asset, int256(current - target));
             } else if (current < target - (target * toleranceBps) / 10000) {
-                underweights[underIndex++] = AssetAdjustment(asset, int256(target) - int256(current));
+                underweights[underIndex++] = AssetAdjustment(asset, int256(target - current));
             }
         }
 
@@ -107,18 +98,15 @@ library RebalancingLib {
         }
     }
 
-    /**
-     * @notice Sum total value of an array of AssetAdjustments
-     */
+    // Adds up all the values in a list of adjustments.
     function sumAdjustments(AssetAdjustment[] memory adjustments) internal pure returns (uint256 total) {
         for (uint i = 0; i < adjustments.length; i++) {
             total += uint256(adjustments[i].deltaUSD);
         }
     }
 
-    /**
-     * @notice Normalize adjustments to ensure sells match total of buys (if needed)
-     */
+    // Makes sure the amount we plan to buy equals what we plan to sell.
+    // If not, we scale the buys to match the sells.
     function scaleToMatch(
         AssetAdjustment[] memory sellers,
         AssetAdjustment[] memory buyers
@@ -139,6 +127,7 @@ library RebalancingLib {
                 deltaUSD: int256((uint256(buyers[i].deltaUSD) * ratio) / 1e18)
             });
         }
+
         scaledSells = sellers;
     }
 }
