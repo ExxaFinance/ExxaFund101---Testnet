@@ -1,10 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0
 
 pragma solidity >=0.7.0 <0.9.0;
-import "remix_tests.sol";
-import "../contracts/MyToken.sol";
+import "./contracts/ExxaFund101.sol";
 
-contract MyTokenTest is MyToken {
+contract MyTokenTest is ExxaTokken {
 
     function testTokenInitialValues() public {
         Assert.equal(name(), "MyToken", "token name did not match");
