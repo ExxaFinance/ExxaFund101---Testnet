@@ -10,7 +10,7 @@ load_dotenv()
 # ========== CONFIGURATION ==========
 RPC_URL = "https://rpc.hyperliquid-testnet.xyz/evm"
 PRIVATE_KEY = os.getenv("PRIVATE_KEY")
-CONTRACT_ADDRESS = "0xYourExxaFund101ContractAddress"
+CONTRACT_ADDRESS = "0x" # Add Exxafund101 testnet contract address here
 ABI_PATH = "./abi/ExxaFund101.json"  # JSON ABI from compiled contract
 GAS_LIMIT = 1_500_000
 SECONDS_BETWEEN_STEPS = 24 * 3600  # one day
