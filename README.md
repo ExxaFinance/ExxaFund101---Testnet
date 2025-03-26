@@ -99,7 +99,7 @@ python Backend/rebalance_TWAP_scheduler.py
 
 The ExxaFund101 system is currently available for testing on **Hyperliquid Testnet**:
 
-🔗 [Testnet RPC](https://rpc.hyperliquid-testnet.xyz/evm)
+🔗 [Testnet RPC][(https://rpc.hyperliquid-testnet.xyz/evm](https://chainlist.org/chain/998))
 
 - Deploy via:
   - Hardhat / Foundry
