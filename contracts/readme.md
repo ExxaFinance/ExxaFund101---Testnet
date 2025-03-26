@@ -66,11 +66,11 @@ It includes:
 
 Planned improvements include:
 
-- 🧠 Oracle integrations for real-time price feeds
-- 🔬 On-chain volatility & trend analysis
+- 🧠 Oracle integrations for real-time price feeds (Chainlink)
+- 🔬 Include volatility & trend analysis
 - 📊 Performance-based fund re-weighting
 - 🔁 Multiple fund types (DeFi / TradFi / Thematic categories)
-- 👁 On-chain fund metadata explorer
+- 👁 More TWAP Order (Diminish market risk)
 
 ---
 
