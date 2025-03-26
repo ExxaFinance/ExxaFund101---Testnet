@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-// Core fund contract for Exxa Finance's Top 10 portfolio, auto-investing on deposit and rebalancing via TWAP strategy
+// Core fund contract for Exxa Finance's Top 10 portfolio, auto-investing on deposit and rebalancing via TWAP strategy.
+// More contracts to come.
+
 import "hyperliquid-evm/contracts/interfaces/IHyperliquid.sol";
 import "./rebalancinglib.sol";
 
