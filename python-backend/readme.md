@@ -12,10 +12,10 @@ This method minimizes market impact and distributes liquidity moves evenly.
 This is an initial version (v1.0) and will be improved progressively to deliver more precise, intelligent rebalancing.  
 Planned enhancements include:
 
-- ⏱️ More frequent refresh cycles
+- ⏱️ More frequent refresh cycles (10 is for test)
 - 📊 Quantitative performance-based asset scoring
 - 📈 Dynamic weight re-evaluation
-- 🧠 Automated selection of underperforming or overweight assets
+- 🧠 More files associated with the rebalancing to come
 
 These upgrades will allow Exxa Funds to react smartly to market conditions and maintain optimal exposure at all times.
 
