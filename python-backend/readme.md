@@ -12,7 +12,7 @@ This method minimizes market impact and distributes liquidity moves evenly.
 This is an initial version (v1.0) and will be improved progressively to deliver more precise, intelligent rebalancing.  
 Planned enhancements include:
 
-- ⏱️ More frequent refresh cycles (10 is for test)
+- ⏱️ More frequent refresh cycles (to improve market risk)
 - 📊 Quantitative performance-based asset scoring
 - 📈 Dynamic weight re-evaluation
 - 🧠 More files associated with the rebalancing to come
