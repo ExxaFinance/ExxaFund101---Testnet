@@ -98,7 +98,7 @@ contract ExxaFund101 {
         _autoInvest(amountUSD);
     }
 
-    // Automatically invest new funds proportionally across target-weighted assets
+    // Automatically invest new funds proportionally across target weighted assets
     function _autoInvest(uint256 totalAmountUSD) internal {
         for (uint i = 0; i < fundState.assets.length; i++) {
             uint256 allocation = (fundState.targetWeights[i] * totalAmountUSD) / 10000;
