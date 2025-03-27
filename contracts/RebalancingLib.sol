@@ -7,6 +7,8 @@ pragma solidity ^0.8.20;
  *
  * It checks which assets have grown too large (overweight) or too small (underweight),
  * and calculates how much to buy or sell to fix that.
+ * 
+ * Future dev: Rebalancing will have more refresh for smooth portfolio adjustments.
  */
 library RebalancingLib {
     // Each AssetAdjustment tells us how much to buy or sell of a token.
